@@ -171,6 +171,16 @@
      <height>22</height>
     </rect>
    </property>
+   <item>
+    <property name="text">
+     <string>Servo</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Stepper</string>
+    </property>
+   </item>
   </widget>
   <widget class="QLabel" name="label">
    <property name="geometry">
@@ -306,12 +316,12 @@
      <rect>
       <x>20</x>
       <y>20</y>
-      <width>61</width>
+      <width>140</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Distance</string>
+     <string>Distance (counts)</string>
     </property>
    </widget>
    <widget class="QLabel" name="IPLabel_3">
@@ -319,12 +329,12 @@
      <rect>
       <x>20</x>
       <y>70</y>
-      <width>61</width>
+      <width>130</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Velocity</string>
+     <string>Velocity (counts/sec)</string>
     </property>
    </widget>
    <widget class="QLabel" name="IPLabel_4">
@@ -332,12 +342,12 @@
      <rect>
       <x>20</x>
       <y>120</y>
-      <width>61</width>
+      <width>130</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Accel</string>
+     <string>Accel (counts/sec^2)</string>
     </property>
    </widget>
    <widget class="QLabel" name="IPLabel_5">
@@ -345,12 +355,12 @@
      <rect>
       <x>20</x>
       <y>170</y>
-      <width>61</width>
+      <width>140</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Decel</string>
+     <string>Decel (counts/sec^2)</string>
     </property>
    </widget>
   </widget>
@@ -381,12 +391,12 @@
      <rect>
       <x>20</x>
       <y>60</y>
-      <width>71</width>
+      <width>150</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Jog Velocity</string>
+     <string>Jog Velocity (counts/sec)</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_3">

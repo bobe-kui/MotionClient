@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'MotionClientfPBMyI.ui'
+## Form generated from reading UI file 'MotionClientvvavyC.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.8.0
 ##
@@ -63,6 +63,8 @@ class Ui_MainWindow(object):
         self.checkBox.setObjectName(u"checkBox")
         self.checkBox.setGeometry(QRect(20, 150, 111, 20))
         self.comboBox = QComboBox(MainWindow)
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
         self.comboBox.setObjectName(u"comboBox")
         self.comboBox.setGeometry(QRect(235, 150, 79, 22))
         self.label = QLabel(MainWindow)
@@ -100,16 +102,16 @@ class Ui_MainWindow(object):
         self.PushButton_Abort.setGeometry(QRect(150, 220, 80, 22))
         self.IPLabel_2 = QLabel(self.Move)
         self.IPLabel_2.setObjectName(u"IPLabel_2")
-        self.IPLabel_2.setGeometry(QRect(20, 20, 61, 22))
+        self.IPLabel_2.setGeometry(QRect(20, 20, 140, 22))
         self.IPLabel_3 = QLabel(self.Move)
         self.IPLabel_3.setObjectName(u"IPLabel_3")
-        self.IPLabel_3.setGeometry(QRect(20, 70, 61, 22))
+        self.IPLabel_3.setGeometry(QRect(20, 70, 130, 22))
         self.IPLabel_4 = QLabel(self.Move)
         self.IPLabel_4.setObjectName(u"IPLabel_4")
-        self.IPLabel_4.setGeometry(QRect(20, 120, 61, 22))
+        self.IPLabel_4.setGeometry(QRect(20, 120, 130, 22))
         self.IPLabel_5 = QLabel(self.Move)
         self.IPLabel_5.setObjectName(u"IPLabel_5")
-        self.IPLabel_5.setGeometry(QRect(20, 170, 61, 22))
+        self.IPLabel_5.setGeometry(QRect(20, 170, 140, 22))
         self.groupBox_2 = QGroupBox(MainWindow)
         self.groupBox_2.setObjectName(u"groupBox_2")
         self.groupBox_2.setGeometry(QRect(270, 180, 251, 141))
@@ -118,7 +120,7 @@ class Ui_MainWindow(object):
         self.lineEdit_7.setGeometry(QRect(20, 80, 113, 22))
         self.IPLabel_6 = QLabel(self.groupBox_2)
         self.IPLabel_6.setObjectName(u"IPLabel_6")
-        self.IPLabel_6.setGeometry(QRect(20, 60, 71, 22))
+        self.IPLabel_6.setGeometry(QRect(20, 60, 150, 22))
         self.pushButton_3 = QPushButton(self.groupBox_2)
         self.pushButton_3.setObjectName(u"pushButton_3")
         self.pushButton_3.setGeometry(QRect(20, 110, 80, 22))
@@ -209,6 +211,9 @@ class Ui_MainWindow(object):
         self.PushButton_PortRefresh.setText(QCoreApplication.translate("MainWindow", u"Refresh", None))
         self.PushButton_PortConnect.setText(QCoreApplication.translate("MainWindow", u"Connect", None))
         self.checkBox.setText(QCoreApplication.translate("MainWindow", u"Enable Motor", None))
+        self.comboBox.setItemText(0, QCoreApplication.translate("MainWindow", u"Servo", None))
+        self.comboBox.setItemText(1, QCoreApplication.translate("MainWindow", u"Stepper", None))
+
         self.label.setText(QCoreApplication.translate("MainWindow", u"Motor Type:", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"Axis: ", None))
         self.comboBox_2.setItemText(0, QCoreApplication.translate("MainWindow", u"X", None))
@@ -218,12 +223,12 @@ class Ui_MainWindow(object):
         self.Move.setTitle(QCoreApplication.translate("MainWindow", u"Move", None))
         self.PushButton_Move.setText(QCoreApplication.translate("MainWindow", u"Move", None))
         self.PushButton_Abort.setText(QCoreApplication.translate("MainWindow", u"Abort", None))
-        self.IPLabel_2.setText(QCoreApplication.translate("MainWindow", u"Distance", None))
-        self.IPLabel_3.setText(QCoreApplication.translate("MainWindow", u"Velocity", None))
-        self.IPLabel_4.setText(QCoreApplication.translate("MainWindow", u"Accel", None))
-        self.IPLabel_5.setText(QCoreApplication.translate("MainWindow", u"Decel", None))
+        self.IPLabel_2.setText(QCoreApplication.translate("MainWindow", u"Distance (counts)", None))
+        self.IPLabel_3.setText(QCoreApplication.translate("MainWindow", u"Velocity (counts/sec)", None))
+        self.IPLabel_4.setText(QCoreApplication.translate("MainWindow", u"Accel (counts/sec^2)", None))
+        self.IPLabel_5.setText(QCoreApplication.translate("MainWindow", u"Decel (counts/sec^2)", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"Jog", None))
-        self.IPLabel_6.setText(QCoreApplication.translate("MainWindow", u"Jog Velocity", None))
+        self.IPLabel_6.setText(QCoreApplication.translate("MainWindow", u"Jog Velocity (counts/sec)", None))
         self.pushButton_3.setText(QCoreApplication.translate("MainWindow", u"Positive", None))
         self.pushButton_4.setText(QCoreApplication.translate("MainWindow", u"Negative", None))
         self.checkBox_2.setText(QCoreApplication.translate("MainWindow", u"Activate Jog", None))
