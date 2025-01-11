@@ -10,7 +10,7 @@ from PySide6.QtSerialPort import QSerialPort
 import sys
 
 from motionWindow import MainWindow
-from serial.tools import list_ports
+
 
 """PySide6 port of the serialport/terminal example from Qt v6.x"""
 

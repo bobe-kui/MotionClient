@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'MotionClientvvavyC.ui'
+## Form generated from reading UI file 'MotionClientbHeeVD.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.8.0
 ##
@@ -16,8 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,
-    QGroupBox, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QPushButton, QSizePolicy, QWidget)
+    QGroupBox, QLabel, QLineEdit, QPushButton,
+    QSizePolicy, QTextEdit, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -56,12 +56,12 @@ class Ui_MainWindow(object):
         self.PushButton_PortConnect = QPushButton(self.USBtoSerialBox)
         self.PushButton_PortConnect.setObjectName(u"PushButton_PortConnect")
         self.PushButton_PortConnect.setGeometry(QRect(150, 90, 80, 22))
-        self.ListWidget_ComPort = QListWidget(self.USBtoSerialBox)
-        self.ListWidget_ComPort.setObjectName(u"ListWidget_ComPort")
-        self.ListWidget_ComPort.setGeometry(QRect(20, 30, 210, 50))
-        self.checkBox = QCheckBox(MainWindow)
-        self.checkBox.setObjectName(u"checkBox")
-        self.checkBox.setGeometry(QRect(20, 150, 111, 20))
+        self.serialPortInfoListBox = QComboBox(self.USBtoSerialBox)
+        self.serialPortInfoListBox.setObjectName(u"serialPortInfoListBox")
+        self.serialPortInfoListBox.setGeometry(QRect(20, 40, 210, 30))
+        self.CheckBox_EnableMotor = QCheckBox(MainWindow)
+        self.CheckBox_EnableMotor.setObjectName(u"CheckBox_EnableMotor")
+        self.CheckBox_EnableMotor.setGeometry(QRect(20, 150, 111, 20))
         self.comboBox = QComboBox(MainWindow)
         self.comboBox.addItem("")
         self.comboBox.addItem("")
@@ -73,12 +73,12 @@ class Ui_MainWindow(object):
         self.label_2 = QLabel(MainWindow)
         self.label_2.setObjectName(u"label_2")
         self.label_2.setGeometry(QRect(395, 150, 30, 22))
-        self.comboBox_2 = QComboBox(MainWindow)
-        self.comboBox_2.addItem("")
-        self.comboBox_2.addItem("")
-        self.comboBox_2.addItem("")
-        self.comboBox_2.setObjectName(u"comboBox_2")
-        self.comboBox_2.setGeometry(QRect(430, 150, 79, 22))
+        self.ComboBox_AxisSelect = QComboBox(MainWindow)
+        self.ComboBox_AxisSelect.addItem("")
+        self.ComboBox_AxisSelect.addItem("")
+        self.ComboBox_AxisSelect.addItem("")
+        self.ComboBox_AxisSelect.setObjectName(u"ComboBox_AxisSelect")
+        self.ComboBox_AxisSelect.setGeometry(QRect(430, 150, 79, 22))
         self.Move = QGroupBox(MainWindow)
         self.Move.setObjectName(u"Move")
         self.Move.setGeometry(QRect(10, 180, 251, 251))
@@ -171,12 +171,12 @@ class Ui_MainWindow(object):
         self.IPLabel_13 = QLabel(self.groupBox_5)
         self.IPLabel_13.setObjectName(u"IPLabel_13")
         self.IPLabel_13.setGeometry(QRect(30, 60, 91, 22))
-        self.lineEdit_9 = QLineEdit(self.groupBox_5)
-        self.lineEdit_9.setObjectName(u"lineEdit_9")
-        self.lineEdit_9.setGeometry(QRect(100, 30, 391, 22))
-        self.lineEdit_10 = QLineEdit(self.groupBox_5)
-        self.lineEdit_10.setObjectName(u"lineEdit_10")
-        self.lineEdit_10.setGeometry(QRect(100, 60, 391, 22))
+        self.LineEdit_ASCIICommand = QLineEdit(self.groupBox_5)
+        self.LineEdit_ASCIICommand.setObjectName(u"LineEdit_ASCIICommand")
+        self.LineEdit_ASCIICommand.setGeometry(QRect(100, 30, 391, 22))
+        self.textEdit = QTextEdit(self.groupBox_5)
+        self.textEdit.setObjectName(u"textEdit")
+        self.textEdit.setGeometry(QRect(100, 60, 390, 20))
         self.groupBox_6 = QGroupBox(MainWindow)
         self.groupBox_6.setObjectName(u"groupBox_6")
         self.groupBox_6.setGeometry(QRect(10, 660, 511, 81))
@@ -210,15 +210,15 @@ class Ui_MainWindow(object):
         self.USBtoSerialBox.setTitle(QCoreApplication.translate("MainWindow", u"USB-to-Serial", None))
         self.PushButton_PortRefresh.setText(QCoreApplication.translate("MainWindow", u"Refresh", None))
         self.PushButton_PortConnect.setText(QCoreApplication.translate("MainWindow", u"Connect", None))
-        self.checkBox.setText(QCoreApplication.translate("MainWindow", u"Enable Motor", None))
+        self.CheckBox_EnableMotor.setText(QCoreApplication.translate("MainWindow", u"Enable Motor", None))
         self.comboBox.setItemText(0, QCoreApplication.translate("MainWindow", u"Servo", None))
         self.comboBox.setItemText(1, QCoreApplication.translate("MainWindow", u"Stepper", None))
 
         self.label.setText(QCoreApplication.translate("MainWindow", u"Motor Type:", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"Axis: ", None))
-        self.comboBox_2.setItemText(0, QCoreApplication.translate("MainWindow", u"X", None))
-        self.comboBox_2.setItemText(1, QCoreApplication.translate("MainWindow", u"Y", None))
-        self.comboBox_2.setItemText(2, QCoreApplication.translate("MainWindow", u"Z", None))
+        self.ComboBox_AxisSelect.setItemText(0, QCoreApplication.translate("MainWindow", u"X", None))
+        self.ComboBox_AxisSelect.setItemText(1, QCoreApplication.translate("MainWindow", u"Y", None))
+        self.ComboBox_AxisSelect.setItemText(2, QCoreApplication.translate("MainWindow", u"Z", None))
 
         self.Move.setTitle(QCoreApplication.translate("MainWindow", u"Move", None))
         self.PushButton_Move.setText(QCoreApplication.translate("MainWindow", u"Move", None))

@@ -138,18 +138,18 @@
      <string>Connect</string>
     </property>
    </widget>
-   <widget class="QListWidget" name="ListWidget_ComPort">
+   <widget class="QComboBox" name="serialPortInfoListBox">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>30</y>
+      <y>40</y>
       <width>210</width>
-      <height>50</height>
+      <height>30</height>
      </rect>
     </property>
    </widget>
   </widget>
-  <widget class="QCheckBox" name="checkBox">
+  <widget class="QCheckBox" name="CheckBox_EnableMotor">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -208,7 +208,7 @@
     <string>Axis: </string>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox_2">
+  <widget class="QComboBox" name="ComboBox_AxisSelect">
    <property name="geometry">
     <rect>
      <x>430</x>
@@ -613,7 +613,7 @@
      <string>Response</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit_9">
+   <widget class="QLineEdit" name="LineEdit_ASCIICommand">
     <property name="geometry">
      <rect>
       <x>100</x>
@@ -623,13 +623,13 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit_10">
+   <widget class="QTextEdit" name="textEdit">
     <property name="geometry">
      <rect>
       <x>100</x>
       <y>60</y>
-      <width>391</width>
-      <height>22</height>
+      <width>390</width>
+      <height>20</height>
      </rect>
     </property>
    </widget>
