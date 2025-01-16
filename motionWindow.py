@@ -2,42 +2,32 @@ from __future__ import annotations
 
 from PySide6.QtCore import QIODeviceBase, Slot
 from PySide6.QtGui import QIntValidator
-from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QButtonGroup, QComboBox, QDialog
+from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QButtonGroup, QComboBox, QDialog, QListWidget
 from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
 
 
 from ui_MotionClient import Ui_MainWindow
+from motionSettings import SettingsDialog
+from motionConsole import Console
 
 BLANK_STRING = "N/A"
 
 CUSTOM_BAUDRATE_INDEX = 4
-
-class Settings():
-    def __init__(self):
-    #Serial Port Stuff
-        self.name = ""
-        self.baud_rate = 0
-        self.string_baud_rate = ""
-        self.data_bits = QSerialPort.Data8
-        self.string_data_bits = ""
-        self.parity = QSerialPort.NoParity
-        self.string_parity = ""
-        self.stop_bits = QSerialPort.OneStop
-        self.string_stop_bits = ""
-        self.flow_control = QSerialPort.SoftwareControl
-        self.string_flow_control = ""
-        self.local_echo_enabled = False
 
 class MainWindow(QMainWindow):
 
     def __init__(self, parent=None):
         #Serial Port Stuff
         super().__init__(parent)
-        self.m_ui = Ui_MainWindow()
-        self._custom_port_inex = -1
-        self.m_ui.setupUi(self)
-        self.m_currentSettigns = Settings()
-        self.m_intValidator = QIntValidator(0, 4000000, self)
+        #Class definition
+        self._custom_port_index = -1
+        self.m_ui = Ui_MainWindow() #UI Class
+        self.m_ui.setupUi(self) #Set up UI
+        self.m_serial = QSerialPort(self) #Serial Port Class
+        self.m_settings = SettingsDialog(self) #Settings Class
+        self.m_console = Console() #Console Class
+        self.m_status = QLabel() #Status Label
+        self.m_intValidator = QIntValidator(0, 4000000, self) #Int Validator sets min and maximum int input
 
         '''All Signals'''
         #Move Box
@@ -45,47 +35,90 @@ class MainWindow(QMainWindow):
         #self.ui.PushButton_Abort.clicked.connect(lambda: self.moveAbort()) #abort move function
 
         #USB to Serial Box
-        self.m_ui.PushButton_PortRefresh.clicked.connect(self.populate_com_ports)
-      #  self.m_ui.PushButton_PortConnect.clicked.connect(self.connect_to_port)
+        self.m_ui.PushButton_PortConnect.clicked.connect(self.open_serial_port)
+        self.m_ui.PushButton_PortDisconnect.clicked.connect(self.close_serial_port)
+        self.m_ui.PushButton_PortDisconnect.setEnabled(False)
+        self.m_ui.PushButton_PortConnect.setEnabled(True)
+        #self.m_ui.PushButton_PortConnect.clicked.connect(self.connect_to_port)
         #Enable Motor Checkbox
 
-    '''All Functions'''
-    def initialize_program(self):
-        print(f"Running initialize_program...")
-        self.populate_com_ports()
-        self.update_connection_status(False)
 
-#Com Port Box
-    
-    #Populates the list of available COM Ports
-    def populate_com_ports(self, idx):
-        print(f"Running populate_com_ports...")
+
+    #Show all ports when the user clicks on the dropdown
+    @Slot(int)
+    def show_port_info(self, idx):
         if idx == -1:
             return
-        
+
         list = self.m_ui.serialPortInfoListBox.itemData(idx)
         count = len(list) if list else 0
         description = list[1] if count > 1 else BLANK_STRING
+        #self.m_ui.descriptionLabel.setText(f"Description: {description}")
+        manufacturer = list[2] if count > 2 else BLANK_STRING
+        #self.m_ui.manufacturerLabel.setText(f"Manufacturer: {manufacturer}")
+        serialno = list[3] if count > 3 else BLANK_STRING
+        #self.m_ui.serialNumberLabel.setText(f"Serial number: {serialno}")
+        location = list[4] if count > 4 else BLANK_STRING
+        #self.m_ui.locationLabel.setText(f"Location: {location}")
+        vendor = list[5] if count > 5 else BLANK_STRING
+        #self.m_ui.vidLabel.setText(f"Vendor Identifier: {vendor}")
+        id = list[6] if count > 6 else BLANK_STRING
+        #self.m_ui.pidLabel.setText(f"Product Identifier: {id}")
+      
+            
 
-        print(f"populate_com_ports successful")
+    @Slot()
+    def open_serial_port(self):
+        print(f"Running open_serial_port...")
+        s = self.m_settings.settings()
+        self.m_serial.setPortName(s.name)
+        self.m_serial.setBaudRate(s.baud_rate)
+        self.m_serial.setDataBits(s.data_bits)
+        self.m_serial.setParity(s.parity)
+        self.m_serial.setStopBits(s.stop_bits)
+        self.m_serial.setFlowControl(s.flow_control)
+        if self.m_serial.open(QIODeviceBase.ReadWrite):
+            self.m_console.setEnabled(True)
+            self.m_console.set_local_echo_enabled(s.local_echo_enabled)
+            self.m_ui.PushButton_PortConnect.setEnabled(False)
+            self.m_ui.PushButton_PortDisconnect.setEnabled(True)
+            print(f"Serial Port Connected")
+            #self.m_ui.actionConfigure.setEnabled(False)
+            #self.show_status_message(description(s))
+        else:
+            QMessageBox.critical(self, "Error", self.m_serial.errorString())
+            self.show_status_message("Open error")
+            print(f"Connection Failed")
+                
+    @Slot()
+    def close_serial_port(self):
+        print(f"Running close_serial_port...")
+        if self.m_serial.isOpen():
+            self.m_serial.close()
+        self.m_console.setEnabled(False)
+        self.m_ui.PushButton_PortConnect.setEnabled(True)
+        self.m_ui.PushButton_PortDisconnect.setEnabled(False)
+        self.m_console.setEnabled(False)
+        self.show_status_message("Disconnected")
 
-#    def connect_to_port(self):
-#        print(f"Running connect_to_port...")
-# 
-#        selected_items = self.m_ui.ListWidget_ComPort.selectedItems()
-#        if not selected_items:
-#            print(f"No COM port selected.")
-#            return
-#        selected_port = selected_items[0].text()
-#        try:
-#            self.serial_connection = serial.Serial(selected_port, baudrate=9600, timeout=1)
-#            self.update_connection_status(True)
-#            print(f"Connected to {selected_port}")
-#        except Exception as e:
-#            self.update_connection_status(False)
-#            print(f"Failed to connect to {selected_port}: {e}")
-#        print(f"connect_to_port successful")
+    @Slot(str)
+    def show_status_message(self,message):
+        self.m_status.setText(message)
 
+    @Slot(bytearray)
+    def write_data(self, data):
+        self.m_serial.write(data)
+
+    @Slot()
+    def read_data(self):
+        data = self.m_serial.readAll()
+        self.m_console.put_data(data.data())
+
+    @Slot(QSerialPort.SerialPortError)
+    def handle_error(self,error):
+        if error == QSerialPort.ResourceError:
+            QMessageBox.critical(self, "Critical Error", self.m_serial.errorString())
+            self.close_serial_port()
 
     def update_connection_status(self, connected):
         print(f"Running update_connection_status...")
