@@ -26,7 +26,7 @@ class Console(QPlainTextEdit):
 
     @Slot(bytearray)
     def put_data(self, data):
-        self.insertPlainText(data.decode("utf8"))
+        self.insertPlainText(data.encode("utf8"))
         bar = self.verticalScrollBar()
         bar.setValue(bar.maximum())
 

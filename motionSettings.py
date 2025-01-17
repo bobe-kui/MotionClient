@@ -11,6 +11,8 @@ from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
 
 from PySide6.QtWidgets import QDialog
 
+from ui_MotionClient import Ui_MainWindow
+
 
 
 BLANK_STRING = "N/A"
@@ -43,6 +45,9 @@ class SettingsDialog(QDialog):
         self._custom_port_index = -1
         self.m_currentSettings = Settings()
         self.m_intValidator = QIntValidator(0, 4000000, self)
+        self.m_ui = Ui_MainWindow()
+        self.m_ui.setupUi(self)
+        self.fill_ports_info()
 
     def settings(self):
         return self.m_currentSettings
@@ -64,9 +69,9 @@ class SettingsDialog(QDialog):
     @Slot(int)
     def check_custom_device_path_policy(self, idx):
         is_custom_path = idx == self._custom_port_index
-        self.m_ui.serialPortInfoListBox.setEditable(is_custom_path)
+        self.m_ui.ComboBox_SerialPort.setEditable(is_custom_path)
         if is_custom_path:
-            self.m_ui.serialPortInfoListBox.clearEditText()
+            self.m_ui.ComboBox_SerialPort.clearEditText()
 
     def fill_ports_parameters(self):
         self.m_ui.baudRateBox.addItem("9600", QSerialPort.Baud9600)
@@ -98,7 +103,7 @@ class SettingsDialog(QDialog):
         self.m_ui.flowControlBox.addItem("XON/XOFF", QSerialPort.SoftwareControl)
 
     def fill_ports_info(self):
-        self.m_ui.serialPortInfoListBox.clear()
+        self.m_ui.ComboBox_SerialPort.clear()
         for info in QSerialPortInfo.availablePorts():
             list = []
             description = info.description()
@@ -113,13 +118,13 @@ class SettingsDialog(QDialog):
             list.append(f"{vid:x}" if vid else BLANK_STRING)
             pid = info.productIdentifier()
             list.append(f"{pid:x}" if pid else BLANK_STRING)
-            self.m_ui.serialPortInfoListBox.addItem(list[0], list)
+            self.m_ui.ComboBox_SerialPort.addItem(list[0], list)
 
-        self._custom_port_index = self.m_ui.serialPortInfoListBox.count()
-        self.m_ui.serialPortInfoListBox.addItem("Custom")
+        self._custom_port_index = self.m_ui.ComboBox_SerialPort.count()
+        self.m_ui.ComboBox_SerialPort.addItem("Custom")
 
     def update_settings(self):
-        self.m_currentSettings.name = self.m_ui.serialPortInfoListBox.currentText()
+        self.m_currentSettings.name = self.m_ui.ComboBox_SerialPort.currentText()
 
         baud_index = self.m_ui.baudRateBox.currentIndex()
         if baud_index == CUSTOM_BAUDRATE_INDEX:
@@ -140,5 +145,5 @@ class SettingsDialog(QDialog):
 
         self.m_currentSettings.flow_control = self.m_ui.flowControlBox.currentData()
         self.m_currentSettings.string_flow_control = self.m_ui.flowControlBox.currentText()
-
-        self.m_currentSettings.local_echo_enabled = self.m_ui.localEchoCheckBox.isChecked()
+        self.m_currentSettings.local_echo_enabled = True
+        #self.m_currentSettings.local_echo_enabled = self.m_ui.localEchoCheckBox.isChecked()

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QIODeviceBase, Slot
 from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QApplication
-from PySide6.QtSerialPort import QSerialPort
+
 
 import sys
 
@@ -15,6 +15,8 @@ from motionWindow import MainWindow
 """PySide6 port of the serialport/terminal example from Qt v6.x"""
 
 if __name__ == "__main__":
+
+    
 
     a = QApplication(sys.argv)
     w = MainWindow()
