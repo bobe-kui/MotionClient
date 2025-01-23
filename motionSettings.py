@@ -11,8 +11,7 @@ from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
 
 from PySide6.QtWidgets import QDialog
 
-from ui_MotionClient import Ui_MainWindow
-
+from ui_MotionSettings import Ui_Dialog
 
 
 BLANK_STRING = "N/A"
@@ -36,7 +35,7 @@ class Settings():
         self.flow_control = QSerialPort.SoftwareControl
         self.string_flow_control = ""
         self.local_echo_enabled = False
-
+        
 class SettingsDialog(QDialog):
     
     def __init__(self, parent = None):
@@ -45,9 +44,18 @@ class SettingsDialog(QDialog):
         self._custom_port_index = -1
         self.m_currentSettings = Settings()
         self.m_intValidator = QIntValidator(0, 4000000, self)
-        self.m_ui = Ui_MainWindow()
+        self.m_ui = Ui_Dialog()
         self.m_ui.setupUi(self)
+        self.m_ui.baudRateBox.setInsertPolicy(QComboBox.NoInsert)
         self.fill_ports_info()
+
+        self.m_ui.ComboBox_SerialPort.currentIndexChanged.connect(self.show_port_info)
+        self.m_ui.baudRateBox.currentIndexChanged.connect(self.check_custom_baud_rate_policy)
+        self.m_ui.ComboBox_SerialPort.currentIndexChanged.connect(
+            self.check_custom_device_path_policy)
+        
+        self.fill_ports_parameters()
+        self.update_settings()
 
     def settings(self):
         return self.m_currentSettings
@@ -56,6 +64,27 @@ class SettingsDialog(QDialog):
     def apply(self):
         self.update_settings()
         self.hide()
+
+    @Slot(int)
+    def show_port_info(self, idx):
+        if idx == -1:
+            return
+
+        list = self.m_ui.ComboBox_SerialPort.itemData(idx)
+        count = len(list) if list else 0
+        description = list[1] if count > 1 else BLANK_STRING
+        self.m_ui.descriptionLabel.setText(f"Description: {description}")
+        manufacturer = list[2] if count > 2 else BLANK_STRING
+        self.m_ui.manufacturerLabel.setText(f"Manufacturer: {manufacturer}")
+        serialno = list[3] if count > 3 else BLANK_STRING
+        self.m_ui.serialNumberLabel.setText(f"Serial number: {serialno}")
+        location = list[4] if count > 4 else BLANK_STRING
+        self.m_ui.locationLabel.setText(f"Location: {location}")
+        vendor = list[5] if count > 5 else BLANK_STRING
+        self.m_ui.vidLabel.setText(f"Vendor Identifier: {vendor}")
+        id = list[6] if count > 6 else BLANK_STRING
+        self.m_ui.pidLabel.setText(f"Product Identifier: {id}")
+
 
     @Slot(int)
     def check_custom_baud_rate_policy(self, idx):
@@ -145,5 +174,5 @@ class SettingsDialog(QDialog):
 
         self.m_currentSettings.flow_control = self.m_ui.flowControlBox.currentData()
         self.m_currentSettings.string_flow_control = self.m_ui.flowControlBox.currentText()
-        self.m_currentSettings.local_echo_enabled = True
+
         #self.m_currentSettings.local_echo_enabled = self.m_ui.localEchoCheckBox.isChecked()
