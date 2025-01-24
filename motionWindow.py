@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QIODeviceBase, Slot
+from PySide6.QtCore import QIODeviceBase, Slot, QThread
 from PySide6.QtGui import QIntValidator
 from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QButtonGroup, QComboBox, QDialog, QListWidget
-from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
-
+#from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
+import serial
 
 from ui_MotionClient import Ui_MainWindow
 from motionSettings import SettingsDialog
+from motionWorker import Worker
 
 
 BLANK_STRING = "N/A"
@@ -24,91 +25,117 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         #Serial Port Stuff
         super().__init__(parent)
-        #Class definition
-        self._custom_port_index = -1
         self.m_ui = Ui_MainWindow() #UI Class
         self.m_ui.setupUi(self) #Set up UI
-        self.m_serial = QSerialPort(self) #Serial Port Class
+        self.m_serial = serial.Serial() #Serial Port
         self.m_settings = SettingsDialog(self) #Settings Class
+        self.abort_flag = False
+        self.worker_thread = None
+        self.worker = None
+    
 
         self.m_status = QLabel() #Status Label
 
         self.m_intValidator = QIntValidator(0, 4000000, self) #Int Validator sets min and maximum int input
-        self.m_available_ports = QSerialPortInfo.availablePorts()
+
         self.m_ui.statusLabel.setText("Status: Not Connected")
         '''All Signals'''
         #Move Box
         self.m_ui.PushButton_Move.clicked.connect(self.relative_move) #move function
-        #self.ui.PushButton_Abort.clicked.connect(lambda: self.moveAbort()) #abort move function
 
-        #USB to Serial Box
-        #self.populate_ports()
+        
+        self.show_port_info()
         self.m_ui.PushButton_PortConnect.clicked.connect(self.open_serial_port)
         self.m_ui.PushButton_PortDisconnect.clicked.connect(self.close_serial_port)
         self.m_ui.PushButton_PortDisconnect.setEnabled(False)
         self.m_ui.PushButton_PortConnect.setEnabled(True)
-        self.m_ui.checkButton.clicked.connect(self.check_port_open)
-        self.m_ui.settingsButton.clicked.connect(self.show_settings_dialog())
+        self.m_ui.PushButton_Settings.setEnabled(True)
+        self.m_ui.checkButton.clicked.connect(self.start_test_move)
+        self.m_ui.PushButton_Settings.clicked.connect(self.show_settings)
+        self.m_settings.settings_updated.connect(self.show_port_info)
+        self.m_ui.PushButton_Abort.clicked.connect(self.abort_move)
 
+        self.m_ui.GroupBox_Home.setEnabled(False) #Enable Home Checkbox
+        self.m_ui.GroupBox_Jog.setEnabled(False) #Enable Jog Checkbox
+        self.m_ui.GroupBox_Home.setEnabled(False) #Enable Home Checkbox
+        self.m_ui.GroupBox_Limits.setEnabled(False) #Enable Limits Checkbox
+        self.m_ui.GroupBox_Move.setEnabled(False) #Enable Move Checkbox
+        self.m_ui.GroupBox_Sequences.setEnabled(False) #Enable Sequences Checkbox
+        self.m_ui.GroupBox_Motor.setEnabled(False) #Enable Motor Checkbox
+        self.m_ui.GroupBox_Serial.setEnabled(True) #Enable Serial Checkbox
         #Enable Motor Checkbox
-        #self.m_ui.ComboBox_SerialPort.currentIndexChanged.connect(self.show_port_info)
-        #self.m_ui.ComboBox_SerialPort.currentIndexChanged.connect(self.m_settings.check_custom_device_path_policy) 
-
-        #self.m_settings.fill_ports_parameters()
-    
-
-        self.m_serial.errorOccurred.connect(self.handle_error)
-        self.m_serial.readyRead.connect(self.read_data)
-
-    def show_settings_dialog(self):
-        self.m_settings.exec()
 
     @Slot()
     def open_serial_port(self):
         print(f"Running open_serial_port...")
         s = self.m_settings.settings()
-        self.m_serial.setPortName(s.name)
-        self.m_serial.setBaudRate(s.baud_rate)
-        self.m_serial.setDataBits(s.data_bits)
-        self.m_serial.setParity(s.parity)
-        self.m_serial.setStopBits(s.stop_bits)
-        self.m_serial.setFlowControl(s.flow_control)
+        # self.m_serial.port = s.name
+        # self.m_serial.baudrate = s.baud_rate
+        # self.m_serial.bytesize = s.data_bits
+        # self.m_serial.parity = s.parity
+        # self.m_serial.stopbits = s.stop_bits
+        # self.m_serial.xonxoff = s.flow_control == "XON/XOFF"
+        # self.m_serial.rtscts = s.flow_control == "RTS/CTS"
+        # self.m_serial.dsrdtr = False  # pyserial does not have direct equivalent for "None"
+        # #eself.m_serial = serial.Serial(s.name, s.baud_rate, timeout=1)
+        self.m_serial= serial.Serial(port=s.name, baudrate=s.baud_rate, bytesize=s.data_bits, parity = s.parity, timeout= s.stop_bits, xonxoff= s.flow_control)
         print(f"Port Name: {s.name}\nBaud Rate: {s.baud_rate}\nData Bits: {s.data_bits}\nParity: {s.parity}\nStop Bits: {s.stop_bits}\nFlow Control: {s.flow_control}")
-        if self.m_serial.open(QIODeviceBase.ReadWrite):
-            self.m_ui.PushButton_PortConnect.setEnabled(False) # Disable Connect Button
-            self.m_ui.PushButton_PortDisconnect.setEnabled(True) # Enable Disconnect Button
-            self.m_ui.ComboBox_SerialPort.setEnabled(False) # Disable Port Selection
-            self.m_ui.statusLabel.setText("Status: Connected") # Update Connection Status
+        try:
+            self.m_ui.PushButton_PortConnect.setEnabled(False)  # Disable Connect Button
+            self.m_ui.PushButton_PortDisconnect.setEnabled(True)  # Enable Disconnect Button
+            self.m_ui.PushButton_Settings.setEnabled(False)  # Disable Settings Button
+            self.m_ui.GroupBox_Home.setEnabled(True)  # Enable Home Checkbox
+            self.m_ui.GroupBox_Jog.setEnabled(True)  # Enable Jog Checkbox
+            self.m_ui.GroupBox_Limits.setEnabled(True)  # Enable Limits Checkbox
+            self.m_ui.GroupBox_Move.setEnabled(True)  # Enable Move Checkbox
+            self.m_ui.GroupBox_Sequences.setEnabled(True)  # Enable Sequences Checkbox
+            self.m_ui.GroupBox_Motor.setEnabled(True)  # Enable Motor Checkbox
+            self.m_ui.statusLabel.setText("Status: Connected")  # Update Connection Status
             self.show_port_info()
             self.show_status_message(description(s))
-            print(f"Connected to {s.name}")
-            self.show_status_message(description(s))
-        else:
-            QMessageBox.critical(self, "Error", self.m_serial.errorString())
-            self.show_status_message("Open error")
-            print(f"Connection Failed")
-                
+        except serial.SerialException as e:
+            self.m_ui.statusLabel.setText(f"Status: Error - {str(e)}")  # Update Connection Status with error
+ 
     @Slot()
     def close_serial_port(self):
         print(f"Running close_serial_port...")
         if self.m_serial.isOpen():
             self.m_serial.close()
-        self.m_ui.PushButton_PortConnect.setEnabled(True)
-        self.m_ui.PushButton_PortDisconnect.setEnabled(False)
-        #self.m_ui.ComboBox_SerialPort.setEnabled(True)
-        self.m_ui.statusLabel.setText("Status: Not Connected")
-        self.show_status_message("Disconnected")
+            self.m_ui.PushButton_PortConnect.setEnabled(True)
+            self.m_ui.PushButton_PortDisconnect.setEnabled(False)
+            self.m_ui.PushButton_Settings.setEnabled(True)
+            self.m_ui.GroupBox_Home.setEnabled(False) #Enable Home Checkbox
+            self.m_ui.GroupBox_Jog.setEnabled(False) #Enable Jog Checkbox
+            self.m_ui.GroupBox_Home.setEnabled(False) #Enable Home Checkbox
+            self.m_ui.GroupBox_Limits.setEnabled(False) #Enable Limits Checkbox
+            self.m_ui.GroupBox_Move.setEnabled(False) #Enable Move Checkbox
+            self.m_ui.GroupBox_Sequences.setEnabled(False) #Enable Sequences Checkbox
+            self.m_ui.GroupBox_Motor.setEnabled(False) #Enable Motor Checkbox
+            self.m_ui.statusLabel.setText("Status: Not Connected")
+            self.show_status_message("Disconnected")
+            self.check_port_open()
+        else:
+            print(f"Port is already closed")
         print(f"close_serial_port successful")
+    
+    def show_settings(self):
+        print(f"Running show_settings...")
+        self.m_settings.show()
+
+    def show_status_message(self, message):
+        print(f"Running show_status_message...")
+        self.m_ui.statusLabel.setText(message)
+        print(f"show_status_message successful")
 
     def show_port_info(self):
         print(f"Running show_port_info...")
+        self.m_ui.portNameLabel.setText(f"Port: {self.m_settings.settings().name}")
         self.m_ui.baudRateLabel.setText(f"Baud Rate: {self.m_settings.settings().baud_rate}")
         self.m_ui.dataBitsLabel.setText(f"Data Bits: {self.m_settings.settings().data_bits}")
         self.m_ui.parityLabel.setText(f"Parity: {self.m_settings.settings().parity}")
         self.m_ui.stopBitsLabel.setText(f"Stop Bits: {self.m_settings.settings().stop_bits}")
         self.m_ui.flowControlLabel.setText(f"Flow Control: {self.m_settings.settings().flow_control}")
         print(f"show_port_info successful")
-
 
     def update_connection_status(self, connected):
         print(f"Running update_connection_status...")
@@ -119,32 +146,40 @@ class MainWindow(QMainWindow):
         print(f"update_connection_status successful")
 
     def check_port_open(self):
-        print(f"Running check_port_open...")
         if self.m_serial.isOpen():
             print(f"Port is open")
+            return True
         else:
             print(f"Port is closed")
-        print(f"check_port_open successful")
+            return False
 
-    @Slot(str)
-    def show_status_message(self,message):
-        self.m_status.setText(message)
-
-    @Slot(bytearray)
-    def write_data(self, data):
-        self.m_serial.write(data)
-        print(f"Writing data: {data}")
-
+        
     @Slot()
-    def read_data(self):
-        data = self.m_serial.readAll()
+    def abort_move(self):
+        if self.worker:
+            self.worker.abort_move()
+        
+    def log_message(self, message):
+        print(message)
 
+    def start_test_move(self):
+        if self.check_port_open():
+            self.worker_thread = QThread()
+            self.worker = Worker(self.m_serial)
+            self.worker.moveToThread(self.worker_thread)
 
-    @Slot(QSerialPort.SerialPortError)
-    def handle_error(self,error):
-        if error == QSerialPort.ResourceError:
-            QMessageBox.critical(self, "Critical Error", self.m_serial.errorString())
-            self.close_serial_port()
+            self.worker_thread.started.connect(self.worker.test_move)
+            self.worker.finished.connect(self.worker_thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.worker_thread.finished.connect(self.worker_thread.deleteLater)
+
+            self.worker.command_sent.connect(self.log_message)
+            self.worker.response_received.connect(self.log_message)
+            self.worker.motion_checked.connect(self.log_message)
+            self.worker.final_position_received.connect(self.log_message)
+            self.worker.error_occurred.connect(self.log_message)
+
+            self.worker_thread.start()
 
 #Move Commands
     def relative_move(self):
@@ -207,20 +242,3 @@ class MainWindow(QMainWindow):
         ]
         print(f"generate_relative_move_command successful")
         return commands
-    
-    def send_commands(ser, cmd, verbose=True):   
-        cmd += '\r'
-        ser.write(cmd.encode())
-        if verbose:
-            print(f" Command: {cmd}")
-            
-            # Read the response
-        response = ser.readline()
-        if(len(response) > 0):
-            retStr = str(response)
-            # chop off the 'b at beginning and carriage return (\r) at end
-            retStr = retStr[2:(len(retStr) - 3)]
-            if verbose:
-                print(f"Response: {retStr}\n")
-            return retStr
-
