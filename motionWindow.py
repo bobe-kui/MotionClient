@@ -156,6 +156,7 @@ class MainWindow(QMainWindow):
         
     @Slot()
     def abort_move(self):
+        print(f"Running abort_move...")
         if self.worker:
             self.worker.abort_move()
         
@@ -180,6 +181,26 @@ class MainWindow(QMainWindow):
             self.worker.error_occurred.connect(self.log_message)
 
             self.worker_thread.start()
+
+    def start_relative_move(self, commands):
+        if self.check_port_open():
+            self.worker_thread = QThread()
+            self.worker = Worker(self.m_serial)
+            self.worker.moveToThread(self.worker_thread)
+
+            self.worker_thread.started.connect(lambda: self.worker.relative_move(commands))
+            self.worker.finished.connect(self.worker_thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.worker_thread.finished.connect(self.worker_thread.deleteLater)
+
+            self.worker.command_sent.connect(self.log_message)
+            self.worker.response_received.connect(self.log_message)
+            self.worker.motion_checked.connect(self.log_message)
+            self.worker.final_position_received.connect(self.log_message)
+            self.worker.error_occurred.connect(self.log_message)
+
+            self.worker_thread.start()
+
 
 #Move Commands
     def relative_move(self):
@@ -206,39 +227,31 @@ class MainWindow(QMainWindow):
             return
         
         print(f"Distance: {move_distance} counts\nVelocity: {move_velocity} counts/sec\nAcceleration: {move_accel} counts/sec^2\nDeceleration: {move_decel} counts/sec^2")
-        commands = self.generate_relative_move_command(distance, accel, decel, velocity)
-        self.send_commands(commands)
+        cmds = self.generate_relative_move_command(distance, accel, decel, velocity)
+        self.start_relative_move(cmds)
         print(f"relative_move successful")
 
     def generate_relative_move_command(self, move_distance, move_accel, move_decel, move_velocity):
-
-
         print(f"Running generate_relative_move_command...")
         """Getting axis data"""
         move_axis = self.m_ui.ComboBox_AxisSelect.currentIndex()
-        if move_axis == 0:
-            axis = "0"
-        elif move_axis == 1:
-            axis = "1"
-        elif move_axis == 2:
-            axis = "2"
-
-
-        """Check if entries are valid"""
-
+        axis = str(move_axis)
+        distance = str(move_distance)
+        accel = str(move_accel)
+        decel = str(move_decel)
+        velocity = str(move_velocity)
 
         """Generates an ASCII command for the motion controller"""
-        commands = [
-        f"{axis} s r0xc8 0\n", #Set the trajectory genearator to aboslute move, trapezoidal profile,
-        f"{axis} s r0xca {move_distance}\n", #set distance (1000 counts = 1 mm)
-        f"{axis} s r0xcb {move_velocity}\n", #set max velocity,re4
-        f"{axis} s r0xcc {move_accel}\n", #set max acceleration,
-        f"{axis} s r0xcd {move_decel}\n", #set max deceleration,
-        f"{axis} g r0x32\n", #Read actual position,
-        f"{axis} t 1\n", #Execute the move,
-        f"{axis} g r0xa0\n", #Determine if move has been completed,
-        f"{axis} g r0xc9\n", #Controller checks trajectory status to see if move was aborted,
-        f"{axis} t 0\n" #Motion stops and th drive is left enabled
+        cmds = [
+            f"{axis} g r0x32",  # Initial position
+            f"{axis} s r0x24 21",  # Set the desired state to "traj. generator drives position loop"
+            f"{axis} s r0xc8 0x100",  # Set the trajectory generator to absolute move, trapezoidal profile
+            f"{axis} s r0xca {distance}",  # Set distance (1000 counts = 1 mm)
+            f"{axis} s r0xcb {velocity}",  # Set max velocity
+            f"{axis} s r0xcc {accel}",  # Set max acceleration
+            f"{axis} s r0xcd {decel}",  # Set max deceleration
+            f"{axis} g r0x32",  # Read actual position
+            f"{axis} t 1"  # Execute the move
         ]
         print(f"generate_relative_move_command successful")
-        return commands
+        return cmds

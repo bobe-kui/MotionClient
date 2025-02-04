@@ -14,14 +14,14 @@ class Worker(QObject):
         self.serial_port = serial_port
         self.abort_flag = False
 
-    @Slot()
+    @Slot(list)
     def test_move(self):
         self.abort_flag = False  # Reset the abort flag
         cmds = [
             '2 g r0x32',       # Initial position
             '2 s r0x24 21',     # Desired state to "traj. generator drives position loop"
             '2 s r0xc8 0x100',  # Trapezoidal relative move (same as 256)
-            '2 s r0xca -10000', # Position (1000 counts = 1 mm)
+            '2 s r0xca -4000', # Position (1000 counts = 1 mm)
             '2 s r0xcb 10000',   # Velocity (Max: 20000 counts/s)
             '2 s r0xcc 20000',  # Acceleration
             '2 s r0xcd 20000',  # Deceleration
@@ -40,6 +40,25 @@ class Worker(QObject):
         except serial.SerialException as e:
             self.error_occurred.emit(f"Error: {str(e)}")
         self.finished.emit()
+
+    @Slot(list)
+    def relative_move(self, cmds):
+        self.abort_flag = False
+        try:
+            for cmd in cmds:
+                if self.abort_flag:
+                    self.send_command('t0')
+                    self.command_sent.emit("Move aborted.")
+                    break
+                print(f"Sending command: {cmd}")
+                self.send_command(cmd)
+            self.check_motion()
+            final_position = self.send_command('0 g r0x32')
+            self.final_position_received.emit(f"Final Position: {final_position}")
+        except serial.SerialException as e:
+            self.error_occurred.emit(f"Error: {str(e)}")
+        self.finished.emit()
+        
 
     def send_command(self, command):
         try:
@@ -60,7 +79,7 @@ class Worker(QObject):
                 self.send_command('t0')
                 self.motion_checked.emit("Move aborted.")
                 break
-            res = self.send_command('2 g r0xa0')
+            res = self.send_command('0 g r0xa0')
             val = res[2:]
             # Check 28th bit
             if val.isnumeric():
