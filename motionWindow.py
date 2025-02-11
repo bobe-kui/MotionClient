@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QIODeviceBase, Slot, QThread
+from PySide6.QtCore import QIODeviceBase, Slot, QThread, QTimer
 from PySide6.QtGui import QIntValidator
 from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QButtonGroup, QComboBox, QDialog, QListWidget
 #from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
@@ -9,7 +9,7 @@ import serial
 from ui_MotionClient import Ui_MainWindow
 from motionSettings import SettingsDialog
 from motionWorker import Worker
-
+from motionCheckWorker import checkWorker
 
 BLANK_STRING = "N/A"
 
@@ -32,13 +32,14 @@ class MainWindow(QMainWindow):
         self.abort_flag = False
         self.worker_thread = None
         self.worker = None
-    
+        self.checkWorker_thread = None
+        self.checkWorker = None
 
         self.m_status = QLabel() #Status Label
 
         self.m_intValidator = QIntValidator(0, 4000000, self) #Int Validator sets min and maximum int input
 
-        self.m_ui.statusLabel.setText("Status: Not Connected")
+        self.show_status_message("Not Connected")
         '''All Signals'''
         #Move Box
         self.m_ui.PushButton_Move.clicked.connect(self.relative_move) #move function
@@ -69,15 +70,6 @@ class MainWindow(QMainWindow):
     def open_serial_port(self):
         print(f"Running open_serial_port...")
         s = self.m_settings.settings()
-        # self.m_serial.port = s.name
-        # self.m_serial.baudrate = s.baud_rate
-        # self.m_serial.bytesize = s.data_bits
-        # self.m_serial.parity = s.parity
-        # self.m_serial.stopbits = s.stop_bits
-        # self.m_serial.xonxoff = s.flow_control == "XON/XOFF"
-        # self.m_serial.rtscts = s.flow_control == "RTS/CTS"
-        # self.m_serial.dsrdtr = False  # pyserial does not have direct equivalent for "None"
-        # #eself.m_serial = serial.Serial(s.name, s.baud_rate, timeout=1)
         self.m_serial= serial.Serial(port=s.name, baudrate=s.baud_rate, bytesize=s.data_bits, parity = s.parity, timeout= s.stop_bits, xonxoff= s.flow_control)
         print(f"Port Name: {s.name}\nBaud Rate: {s.baud_rate}\nData Bits: {s.data_bits}\nParity: {s.parity}\nStop Bits: {s.stop_bits}\nFlow Control: {s.flow_control}")
         try:
@@ -92,7 +84,8 @@ class MainWindow(QMainWindow):
             self.m_ui.GroupBox_Motor.setEnabled(True)  # Enable Motor Checkbox
             self.m_ui.statusLabel.setText("Status: Connected")  # Update Connection Status
             self.show_port_info()
-            self.show_status_message(description(s))
+            self.start_check_position()
+            
         except serial.SerialException as e:
             self.m_ui.statusLabel.setText(f"Status: Error - {str(e)}")  # Update Connection Status with error
  
@@ -114,6 +107,7 @@ class MainWindow(QMainWindow):
             self.m_ui.statusLabel.setText("Status: Not Connected")
             self.show_status_message("Disconnected")
             self.check_port_open()
+            self.stop_check_position()
         else:
             print(f"Port is already closed")
         print(f"close_serial_port successful")
@@ -157,6 +151,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def abort_move(self):
         print(f"Running abort_move...")
+        self.abort_flag = True
         if self.worker:
             self.worker.abort_move()
         
@@ -201,6 +196,32 @@ class MainWindow(QMainWindow):
 
             self.worker_thread.start()
 
+    def start_check_position(self):
+        if self.check_port_open():
+            self.checkWorker_thread = QThread()
+            self.checkWorker = checkWorker(self.m_serial)
+            self.checkWorker.moveToThread(self.checkWorker_thread)
+
+            self.checkWorker_thread.started.connect(lambda: self.checkWorker.start_continuous_loop())
+            self.checkWorker.finished.connect(self.checkWorker_thread.quit)
+            self.checkWorker.finished.connect(self.checkWorker.deleteLater)
+            self.checkWorker_thread.finished.connect(self.checkWorker_thread.deleteLater)
+
+            self.checkWorker.command_sent.connect(self.log_message)
+            self.checkWorker.response_received.connect(self.log_message)
+            self.checkWorker.motion_checked.connect(self.log_message)
+            self.checkWorker.final_position_received.connect(self.log_message)
+            self.checkWorker.error_occurred.connect(self.log_message)
+
+            self.checkWorker_thread.start()
+
+    def stop_check_position(self):
+        self.checkWorker_thread.quit()
+        self.checkWorker_thread.wait()
+        if self.checkWorker_thread is not None:
+            if self.checkWorker and self.checkWorker.continuous_loop_flag:
+                self.checkWorker.stop_continuous_loop()
+            
 
 #Move Commands
     def relative_move(self):
@@ -255,3 +276,4 @@ class MainWindow(QMainWindow):
         ]
         print(f"generate_relative_move_command successful")
         return cmds
+

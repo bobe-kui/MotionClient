@@ -50,7 +50,6 @@ class Worker(QObject):
                     self.send_command('t0')
                     self.command_sent.emit("Move aborted.")
                     break
-                print(f"Sending command: {cmd}")
                 self.send_command(cmd)
             self.check_motion()
             final_position = self.send_command('0 g r0x32')
@@ -79,7 +78,7 @@ class Worker(QObject):
                 self.send_command('t0')
                 self.motion_checked.emit("Move aborted.")
                 break
-            res = self.send_command('0 g r0xa0')
+            res = self.send_command('2 g r0xa0')
             val = res[2:]
             # Check 28th bit
             if val.isnumeric():
